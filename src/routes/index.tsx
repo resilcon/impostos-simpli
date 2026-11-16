@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import logoResilcon from "@/assets/resilcon-horizontal.png.asset.json";
 import { useBanco } from "@/hooks/useBanco";
@@ -13,6 +13,7 @@ const NOVO_GRUPO = "__novo_grupo__";
 
 function Selecao() {
   const banco = useBanco();
+  const navigate = useNavigate();
   const avulsas = banco.empresas.filter((e) => !e.grupoId);
   const [selecionada, setSelecionada] = useState(() => `grupo:grupo-farmanda`);
   const [nome, setNome] = useState("");
@@ -22,7 +23,9 @@ function Selecao() {
   const criandoGrupo = selecionada === NOVO_GRUPO;
   const criando = criandoEmpresa || criandoGrupo;
 
-  const ir = (url: string) => window.location.assign(url);
+  const irParaGrupo = (grupo: string) => navigate({ to: "/grupo/$grupo", params: { grupo } });
+  const irParaEmpresa = (empresa: string) =>
+    navigate({ to: "/painel/$empresa", params: { empresa } });
 
   const entrar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,13 +35,14 @@ function Selecao() {
       if (limpo.length > 80) return setErro("O nome deve ter ate 80 caracteres.");
       if (criandoGrupo) {
         const g = criarGrupo(limpo);
-        return ir(`/grupo/${g.slug}`);
+        return irParaGrupo(g.slug);
       }
       const nova = criarEmpresa(limpo, null);
-      return ir(`/painel/${nova.slug}`);
+      return irParaEmpresa(nova.slug);
     }
     const [tipo, slug] = selecionada.split(":");
-    ir(tipo === "grupo" ? `/grupo/${slug}` : `/painel/${slug}`);
+    if (tipo === "grupo") irParaGrupo(slug);
+    else irParaEmpresa(slug);
   };
 
   return (
