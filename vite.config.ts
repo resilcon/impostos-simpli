@@ -2,17 +2,15 @@ import { defineConfig } from "vite";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
-import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
-// Standalone replica of the Lovable-managed config (no @lovable.dev package
-// available outside their infra). Mirrors: tanstackStart, viteReact,
-// tailwindcss, tsConfigPaths, @ alias, VITE_* env (native to Vite).
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/impostos-simpli/" : "/",
   server: { port: 8080 },
   plugins: [
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
+    tanstackRouter({ target: "react", autoCodeSplitting: true }),
     tailwindcss(),
-    tanstackStart({ customViteReactPlugin: true }),
     viteReact(),
   ],
-});
+}));
