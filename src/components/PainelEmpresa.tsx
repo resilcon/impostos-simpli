@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { AnimatedValue } from "./AnimatedValue";
 import { MonthlyTable } from "./MonthlyTable";
 import { NumberField } from "./NumberField";
@@ -99,12 +100,12 @@ export function PainelEmpresa({
                 alt="Resilcon Contabilidade Consultiva"
                 className="h-10 w-auto sm:h-12"
               />
-              <a
-                href={voltarPara}
+              <Link
+                to={voltarPara}
                 className="inline-flex items-center gap-1.5 rounded-full border border-petrol/25 bg-petrol-soft/70 px-3 py-1.5 text-xs font-semibold text-petrol shadow-sm hover:border-petrol/50 hover:bg-petrol hover:text-white"
               >
                 <span aria-hidden="true">&larr;</span> {voltarLabel}
-              </a>
+              </Link>
             </div>
             <p className="text-[11px] font-semibold tracking-[0.18em] text-teal uppercase">
               {contexto ?? "Planilha comparativa tributaria - 2026"}

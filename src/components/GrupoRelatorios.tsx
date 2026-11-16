@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import { RegimeCard } from "./RegimeCard";
 import { RegularizacaoControl, useRegularizacao } from "./RegularizacaoControl";
 import { parametrosDaEmpresa, type Empresa } from "@/lib/store";
@@ -89,12 +90,13 @@ function PlacarEmpresa({ empresa, grupoSlug }: { empresa: Empresa; grupoSlug: st
               <p className="text-[11px] font-semibold tracking-[0.14em] text-win-deep uppercase">
                 Regime mais vantajoso
               </p>
-              <a
-                href={`/grupo/${grupoSlug}/${empresa.slug}`}
+              <Link
+                to="/grupo/$grupo/$empresa"
+                params={{ grupo: grupoSlug, empresa: empresa.slug }}
                 className="rounded-full bg-teal px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white uppercase shadow-sm transition-colors hover:bg-petrol"
               >
                 Abrir empresa
-              </a>
+              </Link>
             </div>
             <p className="font-display mt-1 text-3xl font-semibold text-ink sm:text-4xl">
               {empresa.nome}

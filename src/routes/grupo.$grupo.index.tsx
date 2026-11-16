@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import logoResilcon from "@/assets/resilcon-horizontal.png.asset.json";
 import {
@@ -50,9 +50,9 @@ function Pagina() {
       <main className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
         <div>
           <h1 className="text-2xl font-semibold text-ink">Grupo nao encontrado</h1>
-          <a href="/" className="mt-3 inline-block text-sm text-teal underline">
+          <Link to="/" className="mt-3 inline-block text-sm text-teal underline">
             Voltar para a selecao
-          </a>
+          </Link>
         </div>
       </main>
     );
@@ -72,12 +72,12 @@ function Pagina() {
                 alt="Resilcon Contabilidade Consultiva"
                 className="h-10 w-auto sm:h-12"
               />
-              <a
-                href="/"
+              <Link
+                to="/"
                 className="inline-flex items-center gap-1.5 rounded-full border border-petrol/25 bg-petrol-soft/70 px-3 py-1.5 text-xs font-semibold text-petrol shadow-sm hover:border-petrol/50 hover:bg-petrol hover:text-white"
               >
                 <span aria-hidden="true">←</span> Trocar grupo
-              </a>
+              </Link>
             </div>
             <p className="text-[11px] font-semibold tracking-[0.18em] text-teal uppercase">
               Planejamento tributario do grupo - 2026
@@ -153,13 +153,14 @@ function Pagina() {
                       className="size-4 accent-[var(--win)]"
                     />
                     <span className="flex-1 truncate">{e.nome}</span>
-                    <a
-                      href={`/grupo/${grupo.slug}/${e.slug}`}
+                    <Link
+                      to="/grupo/$grupo/$empresa"
+                      params={{ grupo: grupo.slug, empresa: e.slug }}
                       onClick={(ev) => ev.stopPropagation()}
                       className="text-xs font-medium text-teal underline-offset-2 hover:underline"
                     >
                       abrir
-                    </a>
+                    </Link>
                   </label>
                 </li>
               );

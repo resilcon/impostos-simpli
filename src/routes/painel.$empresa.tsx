@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { PainelEmpresa } from "@/components/PainelEmpresa";
 import { useBanco } from "@/hooks/useBanco";
 
@@ -24,9 +24,9 @@ function Pagina() {
       <main className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
         <div>
           <h1 className="text-2xl font-semibold text-ink">Empresa nao encontrada</h1>
-          <a href="/" className="mt-3 inline-block text-sm text-teal underline">
+          <Link to="/" className="mt-3 inline-block text-sm text-teal underline">
             Voltar para a selecao
-          </a>
+          </Link>
         </div>
       </main>
     );
