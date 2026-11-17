@@ -207,7 +207,7 @@ export function apurar(
     icms - credIcms + pisP + cofinsP + ipi + iss + encargos + csllP + irpjP + adicionalP;
 
   return {
-    cmv, encargos, despesasOperacionais, icms, pis, cofins, ipi, iss,
+    cmv, encargos, fopagExtra, despesasOperacionais, icms, pis, cofins, ipi, iss,
     credIcms, credIpi, credPis, credCofins, creditos,
     receitaLiquida, margemBruta, lucroLiquido, csll, irpj, adicional, cargaReal,
     pisP, cofinsP, receitaLiquidaP, margemBrutaP, lucroContabilP,
@@ -225,7 +225,7 @@ export function montarResultado(
   const a = apurar(rb, t.vendas, fopag, p, t.proLabore, t.servicos);
 
   const {
-    cmv, encargos, icms, pis, cofins, ipi, iss,
+    cmv, encargos, fopagExtra, icms, pis, cofins, ipi, iss,
     credIcms, credIpi, credPis, credCofins,
     receitaLiquida, margemBruta, lucroLiquido, csll, irpj, adicional, cargaReal,
     pisP, cofinsP, receitaLiquidaP, margemBrutaP, lucroContabilP,
@@ -270,6 +270,7 @@ export function montarResultado(
         { rotulo: "IRPJ (15%)", valor: irpj },
         { rotulo: "Adicional de IR (10%)", valor: adicional },
         { rotulo: "CSLL (9%)", valor: csll },
+        { rotulo: "Proporcionais (ferias e 13o)", valor: fopagExtra },
         { rotulo: "Encargos sobre a folha", valor: encargos },
       ],
       extras: [
@@ -293,6 +294,7 @@ export function montarResultado(
         { rotulo: "IRPJ (15% sobre presuncao)", valor: irpjP },
         { rotulo: "Adicional de IR (10%)", valor: adicionalP },
         { rotulo: "CSLL (9% sobre presuncao)", valor: csllP },
+        { rotulo: "Proporcionais (ferias e 13o)", valor: fopagExtra },
         { rotulo: "Encargos sobre a folha", valor: encargos },
       ],
       extras: [
