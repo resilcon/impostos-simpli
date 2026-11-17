@@ -112,9 +112,13 @@ export function somarMeses(meses: MesInput[]): Totais {
   };
 }
 
+export type TipoLinhaImposto = "base" | "deducao" | "credito" | "subtotal";
+
 export interface LinhaImposto {
   rotulo: string;
   valor: number;
+  tipo: TipoLinhaImposto;
+  /** @deprecated use tipo === "credito" */
   credito?: boolean;
 }
 
@@ -225,7 +229,7 @@ export function montarResultado(
   const a = apurar(rb, t.vendas, fopag, p, t.proLabore, t.servicos);
 
   const {
-    cmv, encargos, fopagExtra, icms, pis, cofins, ipi, iss,
+    cmv, encargos, fopagExtra, despesasOperacionais, icms, pis, cofins, ipi, iss,
     credIcms, credIpi, credPis, credCofins,
     receitaLiquida, margemBruta, lucroLiquido, csll, irpj, adicional, cargaReal,
     pisP, cofinsP, receitaLiquidaP, margemBrutaP, lucroContabilP,
@@ -258,20 +262,26 @@ export function montarResultado(
       nome: "Lucro Real",
       carga: cargaReal,
       linhas: [
-        { rotulo: "ICMS", valor: icms },
-        { rotulo: "Credito de ICMS sobre compras", valor: credIcms, credito: true },
-        { rotulo: "PIS nao-cumulativo", valor: pis },
-        { rotulo: "Credito de PIS", valor: credPis, credito: true },
-        { rotulo: "COFINS nao-cumulativo", valor: cofins },
-        { rotulo: "Credito de COFINS", valor: credCofins, credito: true },
-        { rotulo: "IPI", valor: ipi },
-        { rotulo: "Credito de IPI", valor: credIpi, credito: true },
-        { rotulo: "ISS", valor: iss },
-        { rotulo: "IRPJ (15%)", valor: irpj },
-        { rotulo: "Adicional de IR (10%)", valor: adicional },
-        { rotulo: "CSLL (9%)", valor: csll },
-        { rotulo: "Proporcionais (ferias e 13o)", valor: fopagExtra },
-        { rotulo: "Encargos sobre a folha", valor: encargos },
+        { rotulo: "Receita bruta", valor: rb, tipo: "base" },
+        { rotulo: "ICMS sobre vendas", valor: icms, tipo: "deducao" },
+        { rotulo: "PIS nao-cumulativo", valor: pis, tipo: "deducao" },
+        { rotulo: "COFINS nao-cumulativo", valor: cofins, tipo: "deducao" },
+        { rotulo: "IPI", valor: ipi, tipo: "deducao" },
+        { rotulo: "ISS", valor: iss, tipo: "deducao" },
+        { rotulo: "Credito de ICMS sobre compras", valor: credIcms, tipo: "credito" },
+        { rotulo: "Credito de PIS", valor: credPis, tipo: "credito" },
+        { rotulo: "Credito de COFINS", valor: credCofins, tipo: "credito" },
+        { rotulo: "Credito de IPI", valor: credIpi, tipo: "credito" },
+        { rotulo: "Receita liquida", valor: receitaLiquida, tipo: "subtotal" },
+        { rotulo: "Custo da mercadoria vendida (CMV)", valor: cmv, tipo: "deducao" },
+        { rotulo: "Margem bruta", valor: margemBruta, tipo: "subtotal" },
+        { rotulo: "Proporcionais (ferias e 13o)", valor: fopagExtra, tipo: "deducao" },
+        { rotulo: "Encargos sobre a folha", valor: encargos, tipo: "deducao" },
+        { rotulo: "Despesas operacionais", valor: despesasOperacionais, tipo: "deducao" },
+        { rotulo: "Lucro liquido (antes de IR/CSLL)", valor: lucroLiquido, tipo: "subtotal" },
+        { rotulo: "CSLL (9%)", valor: csll, tipo: "deducao" },
+        { rotulo: "IRPJ (15%)", valor: irpj, tipo: "deducao" },
+        { rotulo: "Adicional de IR (10%)", valor: adicional, tipo: "deducao" },
       ],
       extras: [
         { rotulo: "Receita liquida", valor: receitaLiquida },
@@ -285,17 +295,25 @@ export function montarResultado(
       nome: "Lucro Presumido",
       carga: cargaPresumido,
       linhas: [
-        { rotulo: "ICMS", valor: icms },
-        { rotulo: "Credito de ICMS sobre compras", valor: credIcms, credito: true },
-        { rotulo: "PIS cumulativo", valor: pisP },
-        { rotulo: "COFINS cumulativo", valor: cofinsP },
-        { rotulo: "IPI", valor: ipi },
-        { rotulo: "ISS", valor: iss },
-        { rotulo: "IRPJ (15% sobre presuncao)", valor: irpjP },
-        { rotulo: "Adicional de IR (10%)", valor: adicionalP },
-        { rotulo: "CSLL (9% sobre presuncao)", valor: csllP },
-        { rotulo: "Proporcionais (ferias e 13o)", valor: fopagExtra },
-        { rotulo: "Encargos sobre a folha", valor: encargos },
+        { rotulo: "Receita bruta", valor: rb, tipo: "base" },
+        { rotulo: "ICMS sobre vendas", valor: icms, tipo: "deducao" },
+        { rotulo: "PIS cumulativo", valor: pisP, tipo: "deducao" },
+        { rotulo: "COFINS cumulativo", valor: cofinsP, tipo: "deducao" },
+        { rotulo: "IPI", valor: ipi, tipo: "deducao" },
+        { rotulo: "ISS", valor: iss, tipo: "deducao" },
+        { rotulo: "Credito de ICMS sobre compras", valor: credIcms, tipo: "credito" },
+        { rotulo: "Receita liquida", valor: receitaLiquidaP, tipo: "subtotal" },
+        { rotulo: "Custo da mercadoria vendida (CMV)", valor: cmv, tipo: "deducao" },
+        { rotulo: "Margem bruta", valor: margemBrutaP, tipo: "subtotal" },
+        { rotulo: "Proporcionais (ferias e 13o)", valor: fopagExtra, tipo: "deducao" },
+        { rotulo: "Encargos sobre a folha", valor: encargos, tipo: "deducao" },
+        { rotulo: "Despesas operacionais", valor: despesasOperacionais, tipo: "deducao" },
+        { rotulo: "Lucro contabil estimado", valor: lucroContabilP, tipo: "subtotal" },
+        { rotulo: "Base presumida CSLL (12%)", valor: baseCsllP, tipo: "base" },
+        { rotulo: "CSLL (9% sobre presuncao)", valor: csllP, tipo: "deducao" },
+        { rotulo: "Base presumida IRPJ (8%)", valor: baseIrpjP, tipo: "base" },
+        { rotulo: "IRPJ (15% sobre presuncao)", valor: irpjP, tipo: "deducao" },
+        { rotulo: "Adicional de IR (10%)", valor: adicionalP, tipo: "deducao" },
       ],
       extras: [
         { rotulo: "Base presumida IRPJ (8%)", valor: baseIrpjP },

@@ -94,20 +94,51 @@ export function RegimeCard({
 
         {aberto ? (
           <ul className="divide-y divide-line rounded-lg border border-line">
-            {regime.linhas.map((l) => (
-              <li
-                key={l.rotulo}
-                className="flex items-center justify-between gap-4 px-3 py-2 text-sm transition-colors hover:bg-muted"
-              >
-                <span className={l.credito ? "text-teal" : "text-muted-foreground"}>
-                  {l.rotulo}
-                </span>
-                <span className={`num font-medium ${l.credito ? "text-teal" : "text-ink"}`}>
-                  {l.credito ? "-" : ""}
-                  {brl(Math.abs(l.valor))}
-                </span>
-              </li>
-            ))}
+            {regime.linhas.map((l) => {
+              const tipo = l.tipo ?? (l.credito ? "credito" : "deducao");
+              const ehSubtotal = tipo === "subtotal";
+              const ehCredito = tipo === "credito";
+              const ehDeducao = tipo === "deducao";
+              const sinal = ehCredito ? "+ " : ehDeducao ? "- " : "";
+              return (
+                <li
+                  key={l.rotulo}
+                  className={`flex items-center justify-between gap-4 px-3 py-2 text-sm transition-colors ${
+                    ehSubtotal
+                      ? "border-y border-line/80 bg-muted/60 font-semibold"
+                      : "hover:bg-muted"
+                  }`}
+                >
+                  <span
+                    className={
+                      ehSubtotal
+                        ? "text-ink"
+                        : ehCredito
+                          ? "text-teal"
+                          : ehDeducao
+                            ? "text-destructive/80"
+                            : "text-muted-foreground"
+                    }
+                  >
+                    {l.rotulo}
+                  </span>
+                  <span
+                    className={`num font-medium ${
+                      ehSubtotal
+                        ? "text-ink"
+                        : ehCredito
+                          ? "text-teal"
+                          : ehDeducao
+                            ? "text-destructive/80"
+                            : "text-ink"
+                    }`}
+                  >
+                    {sinal}
+                    {brl(Math.abs(l.valor))}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         ) : null}
       </div>
