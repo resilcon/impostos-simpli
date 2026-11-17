@@ -124,7 +124,7 @@ function PlacarEmpresa({ empresa, grupoSlug }: { empresa: Empresa; grupoSlug: st
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid items-start gap-5 lg:grid-cols-3">
         <RegimeCard
           regime={r.lucroReal}
           vencedor={r.melhor === "lucroReal"}
