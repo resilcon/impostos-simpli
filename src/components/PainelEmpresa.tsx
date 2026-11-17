@@ -12,6 +12,7 @@ import {
   atualizarEmpresa,
   atualizarParametro,
   parametrosDaEmpresa,
+  restaurarOriginal,
   type Empresa,
 } from "@/lib/store";
 import {
@@ -106,6 +107,25 @@ export function PainelEmpresa({
               >
                 <span aria-hidden="true">&larr;</span> {voltarLabel}
               </Link>
+              {empresa.original ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "Restaurar todos os valores originais da planilha para " +
+                          empresa.nome +
+                          "? Isso desfaz qualquer edicao feita (tabela mensal, premissas, faturamentos e % regularizacao).",
+                      )
+                    ) {
+                      restaurarOriginal(empresa.id);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 bg-destructive/5 px-3 py-1.5 text-xs font-semibold text-destructive shadow-sm hover:border-destructive/50 hover:bg-destructive hover:text-white"
+                >
+                  Limpar
+                </button>
+              ) : null}
             </div>
             <p className="text-[11px] font-semibold tracking-[0.18em] text-teal uppercase">
               {contexto ?? "Planilha comparativa tributaria - 2026"}

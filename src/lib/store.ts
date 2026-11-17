@@ -8,6 +8,16 @@ export interface Grupo {
   slug: string;
 }
 
+export interface EmpresaOriginal {
+  parametros: Partial<Parametros>;
+  compras: number;
+  faturamentoRealAnual: number;
+  faturamentoDeclaradoAnual: number;
+  dasAtualAnual: number;
+  pctRegularizacao: number;
+  meses: MesInput[];
+}
+
 export interface Empresa {
   id: string;
   grupoId: string | null;
@@ -21,6 +31,7 @@ export interface Empresa {
   parametros: Partial<Parametros>;
   socios: string[];
   meses: MesInput[];
+  original: EmpresaOriginal | null;
 }
 
 export interface Banco {
@@ -73,7 +84,7 @@ export function carregarBanco(forcar = false): Promise<void> {
       supabase
         .from("empresas")
         .select(
-          "id, grupo_id, nome, slug, faturamento_real_anual, faturamento_declarado_anual, das_atual_anual, pct_regularizacao, compras, parametros, created_at",
+          "id, grupo_id, nome, slug, faturamento_real_anual, faturamento_declarado_anual, das_atual_anual, pct_regularizacao, compras, parametros, original, created_at",
         )
         .order("created_at"),
       supabase.from("dados_mensais").select("*").order("ordem"),
@@ -127,6 +138,7 @@ export function carregarBanco(forcar = false): Promise<void> {
         parametros: (e.parametros ?? {}) as Partial<Parametros>,
         socios: sociosPorEmpresa.get(e.id) ?? [],
         meses: mesesPorEmpresa.get(e.id) ?? MESES_VAZIOS(),
+        original: (e.original ?? null) as EmpresaOriginal | null,
       })),
     });
   })();
@@ -345,6 +357,7 @@ function aplicarEmpresaRemota(r: Record<string, unknown>) {
             pctRegularizacao: r.pct_regularizacao == null ? 1 : Number(r.pct_regularizacao),
             compras: num(r.compras),
             parametros: (r.parametros ?? {}) as Partial<Parametros>,
+            original: r.original != null ? (r.original as EmpresaOriginal) : e.original,
           }
         : e,
     ),
@@ -382,6 +395,15 @@ export function criarEmpresa(nome: string, grupoId: string | null): Empresa {
   let slug = base;
   let n = 2;
   while (cache.empresas.some((e) => e.slug === slug)) slug = base + "-" + (n++);
+  const original: EmpresaOriginal = {
+    parametros: {},
+    compras: 0,
+    faturamentoRealAnual: 0,
+    faturamentoDeclaradoAnual: 0,
+    dasAtualAnual: 0,
+    pctRegularizacao: 1,
+    meses: MESES_VAZIOS(),
+  };
   const nova: Empresa = {
     id: "e-" + slug + "-" + Date.now(),
     grupoId,
@@ -395,6 +417,7 @@ export function criarEmpresa(nome: string, grupoId: string | null): Empresa {
     parametros: {},
     socios: [],
     meses: MESES_VAZIOS(),
+    original,
   };
   definir({ ...cache, empresas: [...cache.empresas, nova] });
 
@@ -410,6 +433,7 @@ export function criarEmpresa(nome: string, grupoId: string | null): Empresa {
       pct_regularizacao: 1,
       compras: 0,
       parametros: nova.parametros,
+      original,
     });
     await supabase.from("dados_mensais").insert(
       nova.meses.map((m, i) => ({
@@ -440,6 +464,53 @@ export function criarGrupo(nome: string): Grupo {
   definir({ ...cache, grupos: [...cache.grupos, novo] });
   void supabase.from("grupos").insert({ id: novo.id, nome: novo.nome, slug: novo.slug });
   return novo;
+}
+
+export function restaurarOriginal(empresaId: string) {
+  const emp = cache.empresas.find((e) => e.id === empresaId);
+  const o = emp?.original;
+  if (!emp || !o) return;
+
+  definir({
+    ...cache,
+    empresas: cache.empresas.map((e) =>
+      e.id === empresaId
+        ? {
+            ...e,
+            parametros: o.parametros,
+            compras: o.compras,
+            faturamentoRealAnual: o.faturamentoRealAnual,
+            faturamentoDeclaradoAnual: o.faturamentoDeclaradoAnual,
+            dasAtualAnual: o.dasAtualAnual,
+            pctRegularizacao: o.pctRegularizacao,
+            meses: o.meses,
+          }
+        : e,
+    ),
+  });
+
+  enfileirar("restore-emp:" + empresaId, () =>
+    supabase
+      .from("empresas")
+      .update({
+        parametros: o.parametros,
+        compras: o.compras,
+        faturamento_real_anual: o.faturamentoRealAnual,
+        faturamento_declarado_anual: o.faturamentoDeclaradoAnual,
+        das_atual_anual: o.dasAtualAnual,
+        pct_regularizacao: o.pctRegularizacao,
+      } as never)
+      .eq("id", empresaId)
+      .then((r) => ({ error: r.error })),
+  );
+
+  for (const m of o.meses) {
+    for (const col of Object.keys(COLUNA_DB) as ColunaMes[]) {
+      gravarCelula(empresaId, m.mes, col, m[col]);
+    }
+  }
+
+  toast.success("Valores originais restaurados");
 }
 
 export function slugify(nome: string): string {
