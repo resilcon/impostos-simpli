@@ -80,15 +80,15 @@ export function carregarBanco(forcar = false): Promise<void> {
   if (!forcar && carregando) return carregando;
   carregando = (async () => {
     const [gr, em, dm, es] = await Promise.all([
-      supabase.from("grupos").select("id, nome, slug").order("nome"),
+      supabase.from("impostos_simpli_grupos").select("id, nome, slug").order("nome"),
       supabase
-        .from("empresas")
+        .from("impostos_simpli_empresas")
         .select(
           "id, grupo_id, nome, slug, faturamento_real_anual, faturamento_declarado_anual, das_atual_anual, pct_regularizacao, compras, parametros, original, created_at",
         )
         .order("created_at"),
-      supabase.from("dados_mensais").select("*").order("ordem"),
-      supabase.from("empresa_socios").select("empresa_id, socios(nome)"),
+      supabase.from("impostos_simpli_dados_mensais").select("*").order("ordem"),
+      supabase.from("impostos_simpli_empresa_socios").select("empresa_id, impostos_simpli_socios(nome)"),
     ]);
 
     const erro = gr.error ?? em.error ?? dm.error ?? es.error;
@@ -185,7 +185,7 @@ type ColunaMes = Exclude<keyof MesInput, "mes">;
 function gravarCelula(empresaId: string, mes: string, coluna: ColunaMes, valor: number) {
   enfileirar("mes:" + empresaId + ":" + mes + ":" + coluna, () =>
     supabase
-      .from("dados_mensais")
+      .from("impostos_simpli_dados_mensais")
       .update({ [COLUNA_DB[coluna]]: valor } as never)
       .eq("empresa_id", empresaId)
       .eq("mes", mes)
@@ -229,14 +229,14 @@ export function atualizarParametro<K extends keyof Parametros>(
   });
   enfileirar("param:" + empresaId, async () => {
     const { data, error } = await supabase
-      .from("empresas")
+      .from("impostos_simpli_empresas")
       .select("parametros")
       .eq("id", empresaId)
       .single();
     if (error) return { error };
     const atual = (data?.parametros ?? {}) as Record<string, unknown>;
     const r = await supabase
-      .from("empresas")
+      .from("impostos_simpli_empresas")
       .update({ parametros: { ...atual, [chave]: valor } } as never)
       .eq("id", empresaId);
     return { error: r.error };
@@ -264,7 +264,7 @@ export function atualizarEmpresa(id: string, patch: Partial<Empresa>) {
   for (const [col, val] of Object.entries(campos)) {
     enfileirar("emp:" + id + ":" + col, () =>
       supabase
-        .from("empresas")
+        .from("impostos_simpli_empresas")
         .update({ [col]: val } as never)
         .eq("id", id)
         .then((r) => ({ error: r.error })),
@@ -276,14 +276,14 @@ export function atualizarEmpresa(id: string, patch: Partial<Empresa>) {
       if ((anterior.parametros as Record<string, unknown>)[k] !== v) {
         enfileirar("param:" + id, async () => {
           const { data, error } = await supabase
-            .from("empresas")
+            .from("impostos_simpli_empresas")
             .select("parametros")
             .eq("id", id)
             .single();
           if (error) return { error };
           const atual = (data?.parametros ?? {}) as Record<string, unknown>;
           const r = await supabase
-            .from("empresas")
+            .from("impostos_simpli_empresas")
             .update({ parametros: { ...atual, [k]: v } } as never)
             .eq("id", id);
           return { error: r.error };
@@ -370,14 +370,14 @@ function iniciarSincronizacao() {
 
   supabase
     .channel("store-sync")
-    .on("postgres_changes", { event: "*", schema: "public", table: "dados_mensais" }, (p) => {
+    .on("postgres_changes", { event: "*", schema: "public", table: "impostos_simpli_dados_mensais" }, (p) => {
       if (p.eventType === "DELETE") return;
       aplicarMesRemoto(p.new as LinhaMes);
     })
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "empresas" }, (p) =>
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "impostos_simpli_empresas" }, (p) =>
       aplicarEmpresaRemota(p.new as Record<string, unknown>),
     )
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "empresas" }, () => {
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "impostos_simpli_empresas" }, () => {
       if (pendentes === 0) void carregarBanco(true).catch(console.error);
     })
     .subscribe();
@@ -422,7 +422,7 @@ export function criarEmpresa(nome: string, grupoId: string | null): Empresa {
   definir({ ...cache, empresas: [...cache.empresas, nova] });
 
   void (async () => {
-    await supabase.from("empresas").insert({
+    await supabase.from("impostos_simpli_empresas").insert({
       id: nova.id,
       grupo_id: grupoId,
       nome: nova.nome,
@@ -435,7 +435,7 @@ export function criarEmpresa(nome: string, grupoId: string | null): Empresa {
       parametros: nova.parametros,
       original,
     });
-    await supabase.from("dados_mensais").insert(
+    await supabase.from("impostos_simpli_dados_mensais").insert(
       nova.meses.map((m, i) => ({
         empresa_id: nova.id,
         mes: m.mes,
@@ -462,7 +462,7 @@ export function criarGrupo(nome: string): Grupo {
   while (cache.grupos.some((g) => g.slug === slug)) slug = base + "-" + (n++);
   const novo: Grupo = { id: "g-" + slug + "-" + Date.now(), nome: nome.trim(), slug };
   definir({ ...cache, grupos: [...cache.grupos, novo] });
-  void supabase.from("grupos").insert({ id: novo.id, nome: novo.nome, slug: novo.slug });
+  void supabase.from("impostos_simpli_grupos").insert({ id: novo.id, nome: novo.nome, slug: novo.slug });
   return novo;
 }
 
@@ -491,7 +491,7 @@ export function restaurarOriginal(empresaId: string) {
 
   enfileirar("restore-emp:" + empresaId, () =>
     supabase
-      .from("empresas")
+      .from("impostos_simpli_empresas")
       .update({
         parametros: o.parametros,
         compras: o.compras,
