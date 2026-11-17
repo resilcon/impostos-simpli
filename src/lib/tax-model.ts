@@ -153,8 +153,13 @@ export function apurar(
   const baseNaoMono = rb * p.pctNaoMonofasico;
   const baseIcms = vendas * p.pctBcIcms;
   const cmv = rb * p.pctCmv;
+  // Replica a planilha: a folha de pagamento usada aqui e reescalada por
+  // receitaBruta/vendas (nao pelo FOPAG puro). Para empresas so-de-vendas
+  // (rb === vendas) isso nao muda nada; para empresas com servicos, a
+  // planilha-fonte propaga o FOPAG proporcionalmente a receita total.
+  const folhaAjustada = vendas > 0 ? fopag * (rb / vendas) : fopag;
   const fopagExtra = fopag * (p.pctFopagAdicional ?? 0);
-  const encargos = (fopag + fopagExtra) * p.pctEncargos + proLabore * INSS_PRO_LABORE;
+  const encargos = (folhaAjustada + fopagExtra) * p.pctEncargos + proLabore * INSS_PRO_LABORE;
   const despesasOperacionais = rb * p.pctDespesasOperacionais;
 
   const icms = baseIcms * p.aliqIcms;
@@ -171,7 +176,7 @@ export function apurar(
 
   const receitaLiquida = rb - icms - pis - cofins - ipi - iss + creditos;
   const margemBruta = receitaLiquida - cmv;
-  const lucroLiquido = margemBruta - fopag - fopagExtra - encargos - despesasOperacionais;
+  const lucroLiquido = margemBruta - folhaAjustada - fopagExtra - encargos - despesasOperacionais;
 
   const limiteAdicional = p.baseLimiteAdicionalMensal * p.mesesLimiteAdicional;
   const csll = lucroLiquido > 0 ? lucroLiquido * p.aliqCsll : 0;
@@ -185,7 +190,7 @@ export function apurar(
   const cofinsP = baseNaoMono * p.cofinsCumulativo;
   const receitaLiquidaP = rb - icms - pisP - cofinsP - ipi - iss + credIcms;
   const margemBrutaP = receitaLiquidaP - cmv;
-  const lucroContabilP = margemBrutaP - fopag - fopagExtra - encargos - despesasOperacionais;
+  const lucroContabilP = margemBrutaP - folhaAjustada - fopagExtra - encargos - despesasOperacionais;
 
   const baseCsllP =
     vendas > 0
